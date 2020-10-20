@@ -1,0 +1,7 @@
+xcuserdata
+*.hprof
+*.xccheckout
+*.xcscmblueprint
+.DS_Store
+.build/
+build/
