@@ -3,11 +3,11 @@ import FrameworkWrapper
 import Realm
 import RealmSwift
 
-class TestData: Object {
-	@objc dynamic var _id: ObjectId = ObjectId.generate()
-	@objc dynamic var _partition = "Global"
-	let mediumInt:Int32	= 0
-	let longInt			= RealmOptional<Int>()
+@objcMembers class TestData: Object {
+	dynamic var _id: ObjectId = ObjectId.generate()
+	dynamic var _partition = "Global"
+	let mediumInt	= RealmOptional<Int32>()
+	let longInt		= RealmOptional<Int>()
 	
 	override static func primaryKey() -> String? {
 		return "_id"
@@ -18,6 +18,43 @@ let app = App(id: "testbed-eobcc")
 
 app.syncManager.logLevel    = .trace
 
+func openRealm(with user: User) -> Realm? {
+	var realm: Realm!
+	var config	= user.configuration(partitionValue: "Global")
+	
+	config.deleteRealmIfMigrationNeeded	= true
+	
+	// Open a realm with the partition key set to a fixed value.
+	do {
+		realm = try Realm(configuration: config)
+		
+		let allObjects   = realm.objects(TestData.self)
+		
+		print("All objects: \(allObjects.count)")
+		
+		return realm
+	} catch {
+		print ("Query failed: \(error.localizedDescription)")
+		
+		return nil
+	}
+
+}
+
+func doSomething(in realm: Realm) {
+	do {
+		try realm.write {
+			let sample	= realm.create(TestData.self,
+										 value: [ObjectId.generate(), "Global", Int32.max, Int.min],
+										 update: .modified)
+			
+			print("Writing \(sample)")
+		}
+	} catch {
+		print ("Write failed: \(error.localizedDescription)")
+	}
+}
+
 app.login(credentials: Credentials.anonymous) { result in
 	DispatchQueue.main.async {
 		let user: User
@@ -26,23 +63,14 @@ app.login(credentials: Credentials.anonymous) { result in
 		case let .success(maybeUser):
 			user = maybeUser
 		case let .failure(error):
-			print("Call to MongoDB failed: \(error.localizedDescription)")
+			print("Login to MongoDB failed: \(error.localizedDescription)")
 			return
 		}
 		
-		var realm: Realm!
+		guard let realm = openRealm(with: user) else { return }
 		
-		// Open a realm with the partition key set to a fixed value.
-		do {
-			realm = try Realm(configuration: user.configuration(partitionValue: "Global"))
-			
-			let allObjects   = realm.objects(TestData.self)
-			
-			print("All objects: \(allObjects.count)")
-		} catch {
-			print (error.localizedDescription)
-			
-			return
-		}
+		print("Realm opened: \(realm.configuration.fileURL!)")
+		
+		doSomething(in: realm)
 	}
 }
