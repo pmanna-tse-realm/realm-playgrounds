@@ -20,9 +20,7 @@ app.syncManager.logLevel    = .trace
 
 func openRealm(with user: User) -> Realm? {
 	var realm: Realm!
-	var config	= user.configuration(partitionValue: "Global")
-	
-	config.deleteRealmIfMigrationNeeded	= true
+	let config	= user.configuration(partitionValue: "Global")
 	
 	// Open a realm with the partition key set to a fixed value.
 	do {
