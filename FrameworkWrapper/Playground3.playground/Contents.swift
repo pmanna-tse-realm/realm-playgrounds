@@ -69,6 +69,6 @@ app.login(credentials: Credentials.anonymous) { result in
 		
 		print("Realm opened: \(realm.configuration.fileURL!)")
 		
-		doSomething(in: realm)
+//		doSomething(in: realm)
 	}
 }
